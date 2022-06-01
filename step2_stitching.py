@@ -36,14 +36,16 @@ def enhance_image_quality(im0, railCentre, railWidth):
     return im3
 
 
-overlappingSize = 394
-runNum = 132
+overlappingSize = 425
+runNum = 354
+dataPath = 'C:\\Personal\\Mudspots\\Run_354-20200216@032951_08000-13966\\'
+
 foutPath = 'Output\\Stitched\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)
 
 '''Get all the image filenames'''
-fpaths = glob('Data\\Run_132-20190424@105356_38000-48000\\Run*')
+fpaths = glob('Run_354-20200216@032951_08000-13966\\Run*')
 fns = []
 for fpath in fpaths:
     fns += glob(fpath + '\\*.jpg')
@@ -54,7 +56,7 @@ railCentres = np.loadtxt('RailCentreLines.csv', delimiter = ',')
 '''Image contrast enhancement and stitching'''    
 railWidth = 100
 for i in range(0, int(len(fns) / 4)):
-    if i % 10 == 0:
+    if i % 100 == 0:
         print('Stitching image %d out of %d' % (i, len(fns) / 4))
     j = i * 4
     railCentre1 = int(railCentres[i, 0] + 0.5)
@@ -81,5 +83,5 @@ for i in range(0, int(len(fns) / 4)):
     '''Save the stitched image'''
     fn = fns[j]
     imageNum = int(fn[fn.rfind('\\') + 1:fn.rfind('_')])
-    imwrite('%s%d.png' % (foutPath, imageNum), im.astype('uint8'))
+    imwrite('%s%5d.png' % (foutPath, imageNum), im.astype('uint8'))
 

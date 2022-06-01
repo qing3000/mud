@@ -6,13 +6,13 @@ Created on Sun May  1 16:42:46 2022
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import glob
 import os
 from imageio import imread, imwrite
 
-runNum = 132
-fns = glob.glob('Output\\Cribs\\Run_132\\*.png')
+runNum = 354
+fns = glob.glob('Output\\Cribs\\Run_%03d\\*.png' % runNum)
+
 foutPath = 'Output\\Blocks\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)

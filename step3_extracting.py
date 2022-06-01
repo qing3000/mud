@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.ndimage as ni
 from imageio import imread, imwrite
+from itertools import combinations
 from glob import glob
 import cv2
 import os
@@ -28,6 +29,95 @@ def stack_images(im1, im2):
     N = min(N1, N2)
     im = np.concatenate((im1[:, :N], im2[:, :N]))
     return im
+
+'''A very simple clustering algorithm by threshold'''
+def simple_clustering(x, threshold):
+    xx = np.sort(x)
+    '''Calculate a binary array to flag up any close samples (gap < threshold)'''
+    b = np.array([0] + (np.diff(xx) < threshold).astype('int').tolist() + [0])
+    
+    '''Locate any continuous sections of the close samples, for being a "cluster"'''
+    '''Any such section will contains at least two samples.'''
+    diff_b = np.diff(b)
+    i0s = np.nonzero(diff_b == 1)[0]
+    i1s = np.nonzero(diff_b == -1)[0] + 1
+    
+    
+    '''Sort the clusters by size because we are more confident on a cluster with more samples'''
+    index = np.argsort(i1s - i0s)[::-1]
+    i0s = i0s[index]
+    i1s = i1s[index]
+    
+    '''Prepare the class labelling'''
+    L = len(xx)
+    labels = np.zeros(L)
+    
+    '''Label the clusters and calculate the class means'''
+    class_means = []
+    label = 1
+    for i0, i1 in zip(i0s, i1s):
+        labels[i0 : i1] = label
+        label += 1
+        class_means.append(np.mean(xx[i0 : i1]))
+    
+    '''Those leftover samples are individual points, each of which is a cluster''' 
+    class_counts = (i1s - i0s).tolist()
+    for i in range(L):
+        if labels[i] == 0:
+            labels[i] = label
+            label += 1
+            class_means.append(xx[i])
+            class_counts.append(1)
+    
+    return labels, class_means, class_counts    
+
+'''Remove outliers to meet the gap requirement (gap >= threshold)'''
+def remove_outliers(x, class_counts, threshold):
+    '''Sort and make a copy of the samples'''
+    xx = np.sort(x).copy().tolist()
+    
+    '''Calculate the gaps'''
+    diff_x = np.diff(xx)
+    if any(diff_x < threshold):
+        '''Locate all the bad points, which have large gap with neighbours'''
+        diff_x_full = np.array([True] + diff_x.tolist() + [True])
+        bad_points = np.logical_or(diff_x_full[1:] < threshold, diff_x_full[:-1] < threshold)
+        indices = np.nonzero(bad_points)[0]
+        
+        '''Remove a subset of the bad points and check if the rest meet the gap requirement'''
+        '''Starting from removing one bad point. As soon as as solution is found, terminate'''
+        for i in range(1, len(indices) - 1):
+            
+            '''Find all the combinations for the subset'''
+            combs = combinations(indices, i)
+            solutions = []
+            
+            '''For each combination, if is a working solution, calculate:'''
+            '''1. The class counts. We would like to remove those classes with less sample points (less confidence).'''
+            '''2. Range. We would like to favour the larger range'''
+            '''3. Standard deviation. We would like to favour those with smaller standard deviation by assuming sleepers are evenly distributed'''
+            for comb in combs:
+                xcopy = x.copy().tolist()
+                
+                '''Remove the possible outliers'''
+                for i in comb[::-1]:
+                    del(xcopy[i])
+                    
+                '''Check if it is a solution'''
+                diff_x = np.diff(xcopy)
+                if all(diff_x >= threshold):
+                    '''Calculate the values for sorting later on'''
+                    class_count = np.sum(class_counts[np.array(comb)])
+                    solutions.append((comb, class_count, np.max(xcopy) - np.min(xcopy), np.std(diff_x)))
+            if len(solutions) > 0:
+                '''If we have multiple solutions, we would like to choose the best one based on the 3 criteria listed above'''
+                sorted_solutions = sorted(solutions, key = lambda e : (-e[1], e[2], -e[3]))
+                solution = sorted_solutions[-1][0]
+                break
+        for i in solution[::-1]:
+            del(xx[i])
+    return xx
+
 
 
 '''Average a strip section parallel to the rails'''
@@ -120,6 +210,13 @@ def locate_tie_centres_by_bolts(im1, im2):
     grad2 = np.diff(profile2)
     grad3 = np.diff(profile3)
     grad4 = np.diff(profile4)
+    
+    # plt.plot(grad1)
+    # plt.plot(grad2)
+    # plt.plot(grad3)
+    # plt.plot(grad4)
+    # plt.grid(True)
+    # raise SystemExit
     row1 = np.argmax(np.abs(grad1))
     row2 = np.argmax(np.abs(grad2))
     row3 = np.argmax(np.abs(grad3))
@@ -195,15 +292,25 @@ def locate_tie_centres_by_bolts(im1, im2):
     # raise SystemExit
 
     peaks = np.sort(peaks1 + peaks2 + peaks3 + peaks4)
-    gap_indices = np.nonzero(np.diff(peaks) > 450)[0]
-    indices = [0] + list(gap_indices + 1) + [len(peaks)]
-    tieCentres = []
-    print(np.diff(indices))
-    for i0, i1 in zip(indices[:-1], indices[1:]):
-        if i1 - i0 > 1:
-            tieCentres.append(np.mean(peaks[i0 : i1]))
+    
+    labels, class_means, class_counts = simple_clustering(peaks, 30)
 
-    return np.sort(np.array(tieCentres))
+    index = np.argsort(class_means)
+    class_means = np.array(class_means)[index]
+    class_counts = np.array(class_counts)[index]
+
+    tieCentres = remove_outliers(class_means, class_counts, 400)
+    
+    # gap_indices = np.nonzero(np.diff(peaks) > 450)[0]
+    # indices = [0] + list(gap_indices + 1) + [len(peaks)]
+    # tieCentres = []
+    # print(np.diff(indices))
+    # for i0, i1 in zip(indices[:-1], indices[1:]):
+    #     if i1 - i0 > 1:
+    #         tieCentres.append(np.mean(peaks[i0 : i1]))
+    # tieCentres = np.sort(np.array(tieCentres))
+
+    return tieCentres
 
 '''Match the sleepers identified in the upper image with the ones identified in the previous lower image'''
 def matchTies(x, y, logfn):
@@ -257,7 +364,7 @@ def draw_ties(rgbIm, tieCentres):
 '''Processing parameters'''
 tieHalfWidth = 120
 railHalfWidth = 130
-runNum = 132
+runNum = 354
 
 logfn = 'log.txt'
 f = open(logfn, 'w')
@@ -307,9 +414,11 @@ for fn1, fn2 in zip(fns[:-1], fns[1:]):
     tieCentres = locate_tie_centres_by_intensity(im1, im2).astype('int')
     
     '''If it fails, use the bolts next the rails to locate sleepers'''
-    if len(tieCentres) < 3:
-        print('Less than 3 sleepers found, use the bolt algorithm to locate sleepers')
-        tieCentres = locate_tie_centres_by_bolts(im1, im2).astype('int')
+    # if len(tieCentres) < 3:
+    #     f = open(logfn, 'a')
+    #     f.write('Less than 3 sleepers found, use the bolt algorithm to locate sleepers')
+    #     f.close()
+    #     tieCentres = np.array(locate_tie_centres_by_bolts(im1, im2)).astype('int')
     
     '''Prepare an image for diagnostic drawing'''
     rgbIm = gray2rgb(im)            

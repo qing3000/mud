@@ -12,10 +12,10 @@ from glob import glob
 from imageio import imread
 
 '''Read in the images from two list of files and create the label array'''
-def read_images_labels(fns0, fns1):
+def shuffle_filenames_and_labels(fns0, fns1):
     n0 = len(fns0)
     n1 = len(fns1)
-    all_images = np.array([imread(fn) for fn in fns0 + fns1])
+    all_fns = np.array(fns0 + fns1)
     all_labels = np.array([0] * n0 + [1] * n1)
     
     '''Mix up the two proportionally so that the two categories are evenly distributed''' 
@@ -25,59 +25,68 @@ def read_images_labels(fns0, fns1):
     indices1[skip_indices] = np.array(range(n1)) + n0
     indices = np.reshape(np.array([indices0] + [indices1]).T, (1, -1))
     indices = indices[indices >= 0].astype('int')
-    return all_images[indices], all_labels[indices]
+    return all_fns[indices], all_labels[indices]
 
-runNum = 132
-'''Load in the training images as a reference in the distribution plot'''
-cleanFns = glob('ForCNN\\CleanBlocks\\Run_%03d\\*.png' % runNum)
-muddyFns = glob('ForCNN\\MuddyBlocks\\Run_%03d\\*.png' % runNum)
-train_images, train_labels = read_images_labels(cleanFns[:6000], muddyFns[:100])
-
-'''Load in the test images'''
-testFns = glob('Output\\CleanBlocks\\Run_%03d\\*.png' % runNum)
-test_images = np.array([imread(fn) for fn in testFns[10000:16000]])
-
-'''Normalize pixel values to be between 0 and 1'''
-train_images, test_images = train_images / 255.0, test_images / 255.0
-
-'''Construct the CNN'''
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (256, 256, 1)))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Flatten())
-model.add(layers.Dense(64, activation = 'relu'))
-model.add(layers.Dense(64, activation = 'relu'))
-model.add(layers.Dense(2))
-model.add(layers.Activation('softmax'))
-
-'''Compile the CNN'''
-model.compile(optimizer = 'adam',
-              loss = losses.SparseCategoricalCrossentropy(from_logits = True),
-              metrics = ['accuracy'])
-
-'''Plot the model as an image'''
-#model.summary()
-plot_model(model, 'cnn_model.png', show_shapes = True)
-
-'''Train the CNN'''
-#history = model.fit(train_images, train_labels, epochs = 30, validation_data = (test_images, test_labels))
-history = model.fit(train_images, train_labels, epochs = 3)
-
-'''Save the model'''
-#model.save('CNN_Model')
-
-'''Plot the accuracy curve'''
-plt.plot(history.history['accuracy'], label='accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.ylim([0.5, 1])
-plt.legend(loc='lower right')
-plt.grid(True)
-
-#ret = model.predict(train_images)
+def read_image(fn):
+    img = imread(fn)
+    img = img - np.mean(img)
+    sigma = np.std(img)
+    if sigma == 0:
+        sigma = 1
+    img /= sigma
+    return img
+  
+#====================================
+if __name__ == '__main__':  
+    runNum = 132
+    print('Load in the training images')
+    cleanFns = glob('ForCNN\\CleanBlocks\\Run_%03d\\*.png' % runNum)
+    muddyFns = glob('ForCNN\\MuddyBlocks\\Run_%03d\\*.png' % runNum)
+    train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
+    train_images = np.array([read_image(fn) for fn in train_fns])
+    
+    print('Load in the test images')
+    test_fns = glob('Output\\Blocks\\Run_%03d\\*.png' % runNum)
+    test_images = np.array([read_image(fn) for fn in test_fns[10000:16000]])
+    
+    print('Construct the CNN')
+    model = models.Sequential()
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (256, 256, 1)))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(64, activation = 'relu'))
+    model.add(layers.Dense(64, activation = 'relu'))
+    model.add(layers.Dense(2))
+    model.add(layers.Activation('softmax'))
+    
+    print('Compile the CNN')
+    model.compile(optimizer = 'adam',
+                  loss = losses.SparseCategoricalCrossentropy(),
+                  metrics = ['accuracy'])
+    
+    print('Plot the model as an image')
+    #model.summary()
+    plot_model(model, 'cnn_model.png', show_shapes = True)
+    
+    print('Train the CNN')
+    #history = model.fit(train_images, train_labels, epochs = 30, validation_data = (test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs = 10)
+    
+    print('Save the model')
+    model.save('CNN_Model')
+    
+    '''Plot the accuracy curve'''
+    plt.plot(history.history['accuracy'], label='accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.ylim([0.5, 1])
+    plt.legend(loc='lower right')
+    plt.grid(True)
+    
+    #ret = model.predict(train_images)

@@ -83,12 +83,12 @@ def calculate_rail_centres(fns, rng):
     return smoothNewRailCentres
         
 
-overlappingSize = 394
-runNum = 132
+dataPath = 'C:\\Personal\\Mudspots\\Run_354-20200216@032951_08000-13966\\'
+
 '''Get all the image filenames'''
-fpaths = glob('Data\\Run_132-20190424@105356_38000-48000\\Run*')
+fpaths = glob(dataPath + 'Run*')
 fns = []
-for fpath in fpaths[:1]:
+for fpath in fpaths:
     fns += glob(fpath + '\\*.jpg')
 
 '''Work out the rail centre lines for each camera by a two-iteration method'''
