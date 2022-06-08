@@ -427,10 +427,10 @@ for fn1, fn2 in zip(fns[:-1], fns[1:]):
     
     if len(tieCentres) > 0:
         '''Check the section before the first tie.'''
-        '''If the first tie is in the lower image, we can't do tie matching.'''
+        '''If the first tie is partly in the lower image, we can't do tie matching.'''
         '''We have to export the section up to the edge of the first tie identified,'''
         '''starting from the first row of the upper image'''
-        if tieCentres[0] >= M1:
+        if tieCentres[0] + tieHalfWidth >= M1:
             cribNum += 1
             cribIm = betweenRailsIm[:tieCentres[0] - tieHalfWidth, :]
             imwrite(foutPath1 + 'Run%03d_Image%s_Crib%04d.png' % (runNum, shortfn1, cribNum), cribIm)
@@ -457,10 +457,6 @@ for fn1, fn2 in zip(fns[:-1], fns[1:]):
                 if draw:
                     cv2.putText(rgbIm, str(cribNum), (100, int(cribCentre)), fontFace = cv2.FONT_HERSHEY_TRIPLEX, fontScale = 3, color = (255, 0, 0), thickness = 3)
 
-        if draw:    
-            '''Draw ties'''
-            draw_ties(rgbIm, tieCentres)        
-
         '''If no tie is identified in the lower image, we have to export the section starting from the'''
         '''lower edge of the last tie up to the last row of the upper image'''
         '''Also, we can't match the tie to the next pair of images.'''
@@ -471,6 +467,10 @@ for fn1, fn2 in zip(fns[:-1], fns[1:]):
             if draw:
                 cribCentre = (tieCentres[-1] + tieHalfWidth + M1) / 2
                 cv2.putText(rgbIm, str(cribNum), (100, int(cribCentre)), fontFace = cv2.FONT_HERSHEY_TRIPLEX, fontScale = 3, color = (255, 0, 0), thickness = 3)
+
+        if draw:    
+            '''Draw ties'''
+            draw_ties(rgbIm, tieCentres)   
         preTieCentres = tieCentres - M1
     else:
         cribNum += 1

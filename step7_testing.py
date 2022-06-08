@@ -36,11 +36,12 @@ def cnn_get_output(fns, get_output_func, blockSize = 500):
 if __name__ == '__main__':  
 
     runNum = 354
+    
     rootPath = '.\\'
     
     print('Load in the traning file names')
-    cleanFns = glob(rootPath + 'ForCNN\\CleanBlocks\\Run_132\\*.png')
-    muddyFns = glob(rootPath + 'ForCNN\\MuddyBlocks\\Run_132\\*.png')
+    cleanFns = glob(rootPath + 'ForCNN\\CleanBlocks\\*.png')
+    muddyFns = glob(rootPath + 'ForCNN\\MuddyBlocks\\*.png')
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     
     print('Load in the test file names')
