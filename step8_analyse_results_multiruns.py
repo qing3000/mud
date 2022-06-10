@@ -8,11 +8,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from step7_testing import fixedHist
 from shutil import copy
+from imageio import imread, imwrite
 
-def CopyImagesByRange(runNum, rng, vs, imageNums, cribNums, rows, cols):
-    for i in np.nonzero(np.logical_and(vs > rng[0], vs < rng[1]))[0]:
-        fn = 'Run%d_Image%05d_Crib%04d_Row%d_Col%d.png' % (runNum, imageNums[i], cribNums[i], rows[i], cols[i])
-        copy('Output\\Blocks\\Run_%d\\%s' % (runNum, fn), 'Diagnostics\\')
+def CopyImagesByRange(runNum, r, vs, imageNums, cribNums, rows, cols):
+    for i in np.nonzero(np.logical_and(vs > r, vs < r + 0.01))[0][:3]:
+        fn = 'Run%d_Image%05d_Crib%04d_Row%d_Col%d' % (runNum, imageNums[i], cribNums[i], rows[i], cols[i])
+        im = imread('Output\\Blocks\\Run_%d\\%s.png' % (runNum, fn))
+        imwrite('Diagnostics\\Value%02d_%s.jpg' % (r, fn), im)
+        #copy('Output\\Blocks\\Run_%d\\%s.png' % (runNum, fn), 'Diagnostics\\Value%02d_%s.png' % (r, fn))
 
 
 '''Load in the ranking done by human'''
@@ -22,10 +25,10 @@ imageNum2s, cribNum2s, row2s, col2s, v2s, temp, labels = np.loadtxt('Output\\Run
 imageNum3s, cribNum3s, row3s, col3s, v3s, temp, labels = np.loadtxt('Output\\Run364_result.csv', delimiter = ',', skiprows = 1, unpack = True)
 
 print('Copy problematic images')
-rng = [10, 10.01]
-CopyImagesByRange(132, rng, v1s, imageNum1s, cribNum1s, row1s, col1s)
-CopyImagesByRange(354, rng, v2s, imageNum2s, cribNum2s, row2s, col2s)
-CopyImagesByRange(364, rng, v3s, imageNum3s, cribNum3s, row3s, col3s)
+for r in range(-10, 10):
+    #CopyImagesByRange(132, r, v1s, imageNum1s, cribNum1s, row1s, col1s)
+    #CopyImagesByRange(354, r, v2s, imageNum2s, cribNum2s, row2s, col2s)
+    CopyImagesByRange(364, r, v3s, imageNum3s, cribNum3s, row3s, col3s)
     
 binSize = 0.2
 hx1, hy1 = fixedHist(v1s, binSize)
