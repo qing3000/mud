@@ -364,7 +364,7 @@ def draw_ties(rgbIm, tieCentres):
 '''Processing parameters'''
 tieHalfWidth = 120
 railHalfWidth = 130
-runNum = 354
+runNum = 364
 
 logfn = 'log.txt'
 f = open(logfn, 'w')

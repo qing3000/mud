@@ -35,7 +35,7 @@ def cnn_get_output(fns, get_output_func, blockSize = 500):
 #====================================
 if __name__ == '__main__':  
 
-    runNum = 354
+    runNum = 364
     
     rootPath = '.\\'
     

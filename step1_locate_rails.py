@@ -83,7 +83,7 @@ def calculate_rail_centres(fns, rng):
     return smoothNewRailCentres
         
 
-dataPath = 'C:\\Personal\\Mudspots\\Run_354-20200216@032951_08000-13966\\'
+dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_52000-62000\\'
 
 '''Get all the image filenames'''
 fpaths = glob(dataPath + 'Run*')
@@ -95,7 +95,7 @@ for fpath in fpaths:
 print('Calculate rail centre lines for camera 1')
 railCentres1 = calculate_rail_centres(fns[::4], [500, 1000])
 print('Calculate rail centre lines for camera 2')
-railCentres2 = calculate_rail_centres(fns[1::4], [0, 400])
+railCentres2 = calculate_rail_centres(fns[1::4], [0, 120])
 print('Calculate rail centre lines for camera 3')
 railCentres3 = calculate_rail_centres(fns[2::4], [500, 1000])
 print('Calculate rail centre lines for camera 4')

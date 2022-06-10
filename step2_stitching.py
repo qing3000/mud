@@ -36,16 +36,16 @@ def enhance_image_quality(im0, railCentre, railWidth):
     return im3
 
 
-overlappingSize = 425
-runNum = 354
-dataPath = 'C:\\Personal\\Mudspots\\Run_354-20200216@032951_08000-13966\\'
+overlappingSize = 394
+runNum = 364
+dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_52000-62000\\'
 
 foutPath = 'Output\\Stitched\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)
 
 '''Get all the image filenames'''
-fpaths = glob('Run_354-20200216@032951_08000-13966\\Run*')
+fpaths = glob(dataPath + 'Run*')
 fns = []
 for fpath in fpaths:
     fns += glob(fpath + '\\*.jpg')
@@ -84,4 +84,6 @@ for i in range(0, int(len(fns) / 4)):
     fn = fns[j]
     imageNum = int(fn[fn.rfind('\\') + 1:fn.rfind('_')])
     imwrite('%s%5d.png' % (foutPath, imageNum), im.astype('uint8'))
+
+    
 

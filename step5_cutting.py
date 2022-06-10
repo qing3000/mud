@@ -10,7 +10,7 @@ import glob
 import os
 from imageio import imread, imwrite
 
-runNum = 354
+runNum = 364
 fns = glob.glob('Output\\Cribs\\Run_%03d\\*.png' % runNum)
 
 foutPath = 'Output\\Blocks\\Run_%03d\\' % runNum
