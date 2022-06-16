@@ -28,18 +28,18 @@ print('Copy problematic images')
 for r in range(-10, 10):
     #CopyImagesByRange(132, r, v1s, imageNum1s, cribNum1s, row1s, col1s)
     #CopyImagesByRange(354, r, v2s, imageNum2s, cribNum2s, row2s, col2s)
-    CopyImagesByRange(364, r, v3s, imageNum3s, cribNum3s, row3s, col3s)
+    #CopyImagesByRange(364, r, v3s, imageNum3s, cribNum3s, row3s, col3s)
     
 binSize = 0.2
 hx1, hy1 = fixedHist(v1s, binSize)
 hx2, hy2 = fixedHist(v2s, binSize)
 hx3, hy3 = fixedHist(v3s, binSize)
-plt.plot(hx1, hy1, label = 'Run 132')
-plt.plot(hx2, hy2, label = 'Run 354')
-plt.plot(hx3, hy3, label = 'Run 364')
+plt.plot(hx1, hy1, label = 'Run 132 (%d samples)' % len(imageNum1s))
+plt.plot(hx2, hy2, label = 'Run 354 (%d samples)' % len(imageNum2s))
+plt.plot(hx3, hy3, label = 'Run 364 (%d samples)' % len(imageNum3s))
 plt.grid(True)
 plt.legend(loc = 0)
-         
+plt.title('Classifier 1 output distributions')         
 
     
     

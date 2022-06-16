@@ -10,6 +10,7 @@ from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 from glob import glob
 from imageio import imread
+from random import shuffle
 
 '''Read in the images from two list of files and create the label array'''
 def shuffle_filenames_and_labels(fns0, fns1):
@@ -18,12 +19,23 @@ def shuffle_filenames_and_labels(fns0, fns1):
     all_fns = np.array(fns0 + fns1)
     all_labels = np.array([0] * n0 + [1] * n1)
     
-    '''Mix up the two proportionally so that the two categories are evenly distributed''' 
+    '''populate a list of indices for class 1'''
     indices0 = range(n0)
+    
+    '''Populate a list of indices for class 2'''
+    '''First, set all indices to be invalid numbers with the same length as class 1'''
+    '''Second, populate the ones by skipping a certain step, which is the ratio n0/n1'''
     indices1 = -np.ones(n0)
-    skip_indices = np.arange(0, n0, n0 / n1).astype('int')
+    skip_indices = np.linspace(0, n0 - 1, n1).astype('int')
     indices1[skip_indices] = np.array(range(n1)) + n0
-    indices = np.reshape(np.array([indices0] + [indices1]).T, (1, -1))
+    
+    '''Combine the two lists of indices'''
+    blockIndices = np.array([indices0] + [indices1]).T
+    
+    '''Reshape it to a flat array''' 
+    indices = blockIndices.flat
+    
+    '''Ignore those invalid indices'''
     indices = indices[indices >= 0].astype('int')
     return all_fns[indices], all_labels[indices]
 
@@ -39,10 +51,13 @@ def read_image(fn):
 #====================================
 if __name__ == '__main__':  
     runNum = 132
-    print('Load in the training images')
-    cleanFns = glob('ForCNN\\CleanBlocks\\Run_%03d\\*.png' % runNum)
-    muddyFns = glob('ForCNN\\MuddyBlocks\\Run_%03d\\*.png' % runNum)
+    print('Get the filenames')
+    cleanFns = glob('ForCNN\\CleanBlocks\\*\\*.png', recursive = True)
+    shuffle(cleanFns)
+    cleanFns = cleanFns[:5000]
+    muddyFns = glob('ForCNN\\MuddyBlocks\\*.png', recursive = True)
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
+    print('Load in training images')
     train_images = np.array([read_image(fn) for fn in train_fns])
     
     print('Load in the test images')

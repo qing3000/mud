@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 from imageio import imread
 from step6_training import shuffle_filenames_and_labels, read_image
-
+from random import shuffle
 
 def fixedHist(x, binWidth):
     binEdges = np.arange(np.min(x) - binWidth / 2.0, np.max(x) + binWidth / 2.0, binWidth)
@@ -41,7 +41,10 @@ if __name__ == '__main__':
     
     print('Load in the traning file names')
     cleanFns = glob(rootPath + 'ForCNN\\CleanBlocks\\*.png')
-    muddyFns = glob(rootPath + 'ForCNN\\MuddyBlocks\\*.png')
+    cleanFns = glob('ForCNN\\CleanBlocks\\*\\*.png', recursive = True)
+    shuffle(cleanFns)
+    cleanFns = cleanFns[:5000]
+    muddyFns = glob('ForCNN\\MuddyBlocks\\*.png', recursive = True)    
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     
     print('Load in the test file names')
@@ -76,15 +79,16 @@ if __name__ == '__main__':
     
     '''Plot the histogram distributions'''
     plt.subplot(2,1,1)
-    plt.plot(hx_c1_clean, hy_c1_clean, label = 'Classifier 1 output (clean)')
-    plt.plot(hx_c1_muddy, hy_c1_muddy, label = 'Classifier 1 output (muddy)')
-    plt.plot(hx_c1_test, hy_c1_test, label = 'Classifier 1 output (Clean test)')
+    plt.plot(hx_c1_clean, hy_c1_clean, label = 'Classifier 1 output (training clean)')
+    plt.plot(hx_c1_muddy, hy_c1_muddy, label = 'Classifier 1 output (training muddy)')
+    plt.plot(hx_c1_test, hy_c1_test, label = 'Classifier 1 output (test)')
     plt.legend(loc = 0)
     plt.grid(True)
+    plt.title('Run%d test results' % runNum)
     plt.subplot(2,1,2)
-    plt.plot(hx_c2_clean, hy_c2_clean, label = 'Classifier 2 output (clean)')
-    plt.plot(hx_c2_muddy, hy_c2_muddy, label = 'Classifier 2 output (muddy)')
-    plt.plot(hx_c2_test, hy_c2_test, label = 'Classifier 2 output (Clean test)')
+    plt.plot(hx_c2_clean, hy_c2_clean, label = 'Classifier 2 output (training clean)')
+    plt.plot(hx_c2_muddy, hy_c2_muddy, label = 'Classifier 2 output (training muddy)')
+    plt.plot(hx_c2_test, hy_c2_test, label = 'Classifier 2 output (test)')
     plt.grid(True)
     plt.legend(loc = 0)
     
