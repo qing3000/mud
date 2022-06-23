@@ -36,9 +36,9 @@ def enhance_image_quality(im0, railCentre, railWidth):
     return im3
 
 
-overlappingSize = 394
+overlappingSize = 386
 runNum = 364
-dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_52000-62000\\'
+dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_85000-95000\\'
 
 foutPath = 'Output\\Stitched\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
@@ -76,10 +76,14 @@ for i in range(0, int(len(fns) / 4)):
 
     '''Combine 4 cameras'''
     im = np.concatenate((im1[:, :railCentre1], \
-                         im2[:, railCentre2:-int(overlappingSize / 2)], \
-                         im3[:, int(overlappingSize / 2):railCentre3], \
-                         im4[:,railCentre4:]), axis = 1)
-
+                          im2[:, railCentre2:-int(overlappingSize / 2)], \
+                          im3[:, int(overlappingSize / 2):railCentre3], \
+                          im4[:,railCentre4:]), axis = 1)
+    # im = np.concatenate((im1[:, :railCentre1], \
+    #                       im2[:, railCentre2:], \
+    #                       im3[:, :railCentre3], \
+    #                       im4[:,railCentre4:]), axis = 1)
+        
     '''Save the stitched image'''
     fn = fns[j]
     imageNum = int(fn[fn.rfind('\\') + 1:fn.rfind('_')])

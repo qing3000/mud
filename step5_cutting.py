@@ -11,9 +11,9 @@ import os
 from imageio import imread, imwrite
 
 runNum = 364
-fns = glob.glob('Output\\MuddyCribs\\Run_%03d\\*.png' % runNum)
+fns = glob.glob('Output\\Cribs\\Run_%03d\\*.png' % runNum)
 
-foutPath = 'Output\\MuddyBlocks\\Run_%03d\\' % runNum
+foutPath = 'Output\\Blocks\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)
 

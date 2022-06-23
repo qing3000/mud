@@ -48,7 +48,7 @@ if __name__ == '__main__':
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     
     print('Load in the test file names')
-    test_fns = glob(rootPath + 'Output\\Blocks\\Run_%03d\\*.png' % runNum)
+    test_fns = glob(rootPath + 'Output\\Blocks\\Run_%03d_batch1\\*.png' % runNum)
     
     print('Load in the pretrained CNN model')
     model = models.load_model('CNN_Model')
@@ -67,6 +67,7 @@ if __name__ == '__main__':
     test_c1_values = test_output[:, 0]
     test_c2_values = test_output[:, 1]
     
+   
     '''Calculate the histogram distributions'''
     print('Calculate the histograms')
     binSize = 0.2
@@ -111,3 +112,11 @@ if __name__ == '__main__':
         f.write('%d,%d,%d,%d,%f,%f,%d\n' % (imageNum, cribNum, rowNum, colNum, test_c1_values[i], test_c2_values[i], labels[i]))
     f.close()
     
+    '''Save the training output values for reference'''
+    f = open('Output\\Clean_values.csv', 'w')
+    f.write('\n'.join(map(str, clean_c1_values)))
+    f.close()
+    f = open('Output\\Mud_values.csv', 'w')
+    f.write('\n'.join(map(str, muddy_c1_values)))
+    f.close()
+

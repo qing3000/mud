@@ -83,7 +83,7 @@ def calculate_rail_centres(fns, rng):
     return smoothNewRailCentres
         
 
-dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_52000-62000\\'
+dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_85000-95000\\'
 
 '''Get all the image filenames'''
 fpaths = glob(dataPath + 'Run*')
@@ -93,13 +93,13 @@ for fpath in fpaths:
 
 '''Work out the rail centre lines for each camera by a two-iteration method'''
 print('Calculate rail centre lines for camera 1')
-railCentres1 = calculate_rail_centres(fns[::4], [500, 1000])
+railCentres1 = calculate_rail_centres(fns[::4], [300, 800])
 print('Calculate rail centre lines for camera 2')
-railCentres2 = calculate_rail_centres(fns[1::4], [0, 120])
+railCentres2 = calculate_rail_centres(fns[1::4], [0, 150])
 print('Calculate rail centre lines for camera 3')
-railCentres3 = calculate_rail_centres(fns[2::4], [500, 1000])
+railCentres3 = calculate_rail_centres(fns[2::4], [970, 1024])
 print('Calculate rail centre lines for camera 4')
-railCentres4 = calculate_rail_centres(fns[3::4], [0, 500])
+railCentres4 = calculate_rail_centres(fns[3::4], [300, 800])
 
 railCentres = np.array([railCentres1, railCentres2, railCentres3, railCentres4])
 np.savetxt('RailCentreLines.csv', railCentres.T, fmt = '%d', delimiter = ',')
