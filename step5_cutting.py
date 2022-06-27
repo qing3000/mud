@@ -9,28 +9,56 @@ import numpy as np
 import glob
 import os
 from imageio import imread, imwrite
+import matplotlib.pyplot as plt
+import scipy.ndimage as ni
 
-runNum = 364
-fns = glob.glob('Output\\Cribs\\Run_%03d\\*.png' % runNum)
+def enhance_image_quality(im0):
+    contrastNSigma = 3.5
+    smoothWinSize = 10
+    im = im0.astype('float')
+    M, N = np.shape(im)    
+    
+    p1 = np.mean(im, 0)
+    p2 = ni.convolve(p1, np.ones(smoothWinSize) / smoothWinSize, mode = 'mirror')    
+    intensityMatrix = np.array([p2] * M)
+    im2 = im / intensityMatrix - 1
+    rowSigmas = np.std(im2, axis = 1)
+    averageSigma = np.mean(rowSigmas)
+    contrastRatio = 128 / (averageSigma * contrastNSigma)
+    im3 = im2 * contrastRatio + 128;
+    im3[im3 < 0] = 0
+    im3[im3 > 254] = 254
+    # plt.subplot(3,1,1)
+    # plt.imshow(im, interpolation = 'none', cmap = 'gray')
+    # plt.grid(True)
+    # plt.title('Raw crib image')
+    # plt.subplot(3,1,2)
+    # plt.plot(p2)
+    # plt.title('Intensity profile')
+    # plt.xlim([0, N - 1])
+    # plt.grid(True)
+    # plt.subplot(3,1,3)
+    # plt.imshow(im3, interpolation = 'none', cmap = 'gray')
+    # plt.grid(True)
+    # plt.title('Contrast enhanced')
+    # raise SystemExit
+    return im3
 
-foutPath = 'Output\\Blocks\\Run_%03d\\' % runNum
+fns = glob.glob('Data\\RioTinto\\mudspot_cribs\\Run_122-20211004@162148\\*.png')
+
+foutPath = 'Output\\Blocks\\RioTinto\\Muddy\\'
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)
+trimSize = 50
 
 blockWidth = 256
 blockHeight = 256
 ignoreFraction = 0.7
-for j, fn in enumerate(fns):
-    if j % 10 == 0:
-        print('%d out of %d' % (j, len(fns)))
-    im = imread(fn)
-    # plt.imshow(im, interpolation = 'none', cmap = 'gray')
-    # plt.xlim([0, 1024])
-    # plt.ylim([512, 0])
-    # plt.gca().set_xticks(range(0, 1024, blockWidth))
-    # plt.gca().set_yticks(range(0, 512, blockWidth))
-    # plt.grid(True)
-    # raise SystemExit
+for k, fn in enumerate(fns):
+    if k % 10 == 0:
+        print('%d out of %d' % (k, len(fns)))
+    im = imread(fn)[trimSize : -trimSize,trimSize : -trimSize]
+    im = enhance_image_quality(im)
     M, N = np.shape(im)
     m = int(np.ceil(M / blockHeight))
     n = int(np.ceil(N / blockWidth))

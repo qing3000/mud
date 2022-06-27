@@ -48,7 +48,7 @@ if __name__ == '__main__':
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     
     print('Load in the test file names')
-    test_fns = glob(rootPath + 'Output\\Blocks\\Run_%03d_batch1\\*.png' % runNum)
+    test_fns = glob(rootPath + 'Output\\Blocks\\RioTinto\\Muddy\\*.png')
     
     print('Load in the pretrained CNN model')
     model = models.load_model('CNN_Model')
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     labels = test_c1_values < threshold
     
     '''Output classification results to csv'''
-    f = open('Output\\Run%03d_result.csv' % runNum, 'w')
+    f = open('Output\\RioTinto_Muddy_result.csv', 'w')
     f.write('Image#,Crib#,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
     for i in range(len(test_fns)):
         fn = test_fns[i]
