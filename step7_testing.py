@@ -48,7 +48,7 @@ if __name__ == '__main__':
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     
     print('Load in the test file names')
-    test_fns = glob(rootPath + 'Output\\Blocks\\RioTinto\\Muddy\\*.png')
+    test_fns = glob(rootPath + 'Output\\Blocks\\RioTinto\\TrueMuddy\\*.png')
     
     print('Load in the pretrained CNN model')
     model = models.load_model('CNN_Model')
@@ -98,18 +98,31 @@ if __name__ == '__main__':
     threshold = -1.0
     labels = test_c1_values < threshold
     
-    '''Output classification results to csv'''
-    f = open('Output\\RioTinto_Muddy_result.csv', 'w')
-    f.write('Image#,Crib#,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
+    # '''Output classification results to csv'''
+    # f = open('Output\\Run%d_result.csv' % runNum, 'w')
+    # f.write('Image#,Crib#,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
+    # for i in range(len(test_fns)):
+    #     fn = test_fns[i]
+    #     shortfn = fn[fn.rfind('\\') + 1:fn.rfind('.')]
+    #     ss = shortfn.split('_')
+    #     imageNum = int(ss[1][5:])
+    #     cribNum = int(ss[2][4:])
+    #     rowNum = int(ss[3][3:])
+    #     colNum = int(ss[4][3:])
+    #     f.write('%d,%d,%d,%d,%f,%f,%d\n' % (imageNum, cribNum, rowNum, colNum, test_c1_values[i], test_c2_values[i], labels[i]))
+    # f.close()
+    
+    
+    '''Output RioTinto classification results to csv'''
+    f = open('Output\\RioTinto_Clean_result.csv', 'w')
+    f.write('Image filename,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
     for i in range(len(test_fns)):
         fn = test_fns[i]
         shortfn = fn[fn.rfind('\\') + 1:fn.rfind('.')]
         ss = shortfn.split('_')
-        imageNum = int(ss[1][5:])
-        cribNum = int(ss[2][4:])
-        rowNum = int(ss[3][3:])
-        colNum = int(ss[4][3:])
-        f.write('%d,%d,%d,%d,%f,%f,%d\n' % (imageNum, cribNum, rowNum, colNum, test_c1_values[i], test_c2_values[i], labels[i]))
+        rowNum = int(ss[5][3:])
+        colNum = int(ss[6][3:])
+        f.write('%s,%d,%d,%f,%f,%d\n' % (shortfn, rowNum, colNum, test_c1_values[i], test_c2_values[i], labels[i]))
     f.close()
     
     '''Save the training output values for reference'''
