@@ -11,18 +11,21 @@ from shutil import copy
 from imageio import imread, imwrite
 
 '''Load in the ranking done by human'''
-#runStr = 'Run_132-20190424@105356_38000-48000'
-#runNum = '132'
-#runStr = 'Run_354-20200216@032951_08000-13966'
-#runNum = '354'
-#runStr = 'Run_364-20200424@011547_52000-62000'
-#runNum = '364_batch1'
-#runStr = 'Run_364-20200424@011547_70000-80000'
-#runNum = '364_batch2'
-runStr = 'Run_364-20200424@011547_85000-95000'
-runNum = '364_batch3'
+runStr = 'Run_132-20190424@105356_38000-48000'
+runNum = '132'
+runStr = 'Run_354-20200216@032951_08000-13966'
+runNum = '354'
+# runStr = 'Run_364-20200424@011547_52000-62000'
+# runNum = '364_batch1'
+# runStr = 'Run_364-20200424@011547_70000-80000'
+# runNum = '364_batch2'
+# runStr = 'Run_364-20200424@011547_85000-95000'
+# runNum = '364_batch3'
 csvfile = 'C:\\Personal\\Mudspots\\%s\\%s_Rankings.csv' % (runStr, runStr)   
 imgNums, smi = np.loadtxt(csvfile, delimiter = ',', skiprows = 1, usecols = (0, 3), unpack = True)
+'''Run354 has some missing data'''
+# imgNums = imgNums[:5500]
+# smi = smi[:5500]
 
 '''Load in the labelling by the CNN and recalculate the labels based on a new threshold'''
 imageNums, CribNums, Rows, Cols, v1s, v2s, labels = np.loadtxt('Output\\Run%s_result.csv' % runNum, delimiter = ',', skiprows = 1, unpack = True)
@@ -33,22 +36,20 @@ counts = np.array([np.sum(labels[imageNums == imgNum]) for imgNum in imgNums])
 
 '''Calculate the fraction of false negatives (mud images classified as clean or zero mud blocks)'''
 totalCleanLabelCount = np.count_nonzero(counts == 0)
-correctCleanLabelCount = np.count_nonzero(np.logical_and(counts == 0, smi == 1))
-wrongCleanLabelCount = totalCleanLabelCount - correctCleanLabelCount
+wrongCleanLabelCount = np.count_nonzero(np.logical_and(counts == 0, smi == 3))
 print('Fraction of false negatives=%d/%d=%.2f%%' % (wrongCleanLabelCount, totalCleanLabelCount, wrongCleanLabelCount * 100 / totalCleanLabelCount))
 
 '''Calculate the fraction of false positives (clean images classified as mud (nonzero mud blocks)'''
 totalMudLabelCount = np.count_nonzero(counts > 0)
-correctMudLabelCount = np.count_nonzero(np.logical_and(counts > 0, smi > 1))
-wrongMudLabelCount = totalMudLabelCount - correctMudLabelCount
+wrongMudLabelCount = np.count_nonzero(np.logical_and(counts > 0, smi == 1))
 print('Fraction of false positives=%d/%d=%.2f%%' % (wrongMudLabelCount, totalMudLabelCount, wrongMudLabelCount * 100 / totalMudLabelCount))
 
-print('Copy problematic images')
-wrongCleanLabelIndices = np.nonzero(np.logical_and(counts == 0, smi != 1))[0]
-for i in wrongCleanLabelIndices:
-    img = imread('Output\\Drawn\\Run_%s\\%05d_%05d.png' % (runNum, imgNums[i], imgNums[i] + 1))
-    M, N, K = np.shape(img)
-    imwrite('Output\\FalseNegatives\\Run%s\\%05d.jpg' % (runNum, imgNums[i]), img[:int(M / 2), :, :3])
+# print('Copy problematic images')
+# wrongCleanLabelIndices = np.nonzero(np.logical_and(counts == 0, smi != 1))[0]
+# for i in wrongCleanLabelIndices:
+#     img = imread('Output\\Drawn\\Run_%s\\%05d_%05d.png' % (runNum, imgNums[i], imgNums[i] + 1))
+#     M, N, K = np.shape(img)
+#     imwrite('Output\\FalseNegatives\\Run%s\\%05d.jpg' % (runNum, imgNums[i]), img[:int(M / 2), :, :3])
 
 # wrongMudLabelIndices = np.nonzero(np.logical_and(counts > 0, smi == 1))[0]
 # for i in wrongMudLabelIndices:

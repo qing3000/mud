@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 from imageio import imread
 from random import shuffle
+from scipy.ndimage import zoom
 #from test_2D_FFT import calculate_fft2
 
 '''Read in the images from two list of files and create the label array'''
@@ -41,20 +42,34 @@ def shuffle_filenames_and_labels(fns0, fns1):
     return all_fns[indices], all_labels[indices]
 
 def read_image(fn):
-    img = imread(fn)
-    img = fix_image_size(img, (500, 870))
-    img = img - np.mean(img)
-    sigma = np.std(img)
+    '''read in the image'''
+    im0 = imread(fn)
+    
+    '''Statistical normalisation to zero mean  and unit variance'''
+    im1 = im0 - np.mean(im0)
+    sigma = np.std(im1)
     if sigma == 0:
         sigma = 1
-    img /= sigma
-    return img
+    im1 /= sigma
+
+    '''Resize image'''
+    fixedWidth = 1250 #Standard gauge 1450mm-200mm
+    fixedNarrowWidth = 867 #Narrow gauge 1067 - 200mm
+    fixedHeight = 450 #Standard crib size
+    M, N = np.shape(im1)
+    shortfn = fn[fn.rfind('\\') + 1:]
+    if shortfn[3:6] == '132': #narrow gauge
+        zim = zoom(im1, (1, fixedNarrowWidth / N))
+    else:
+        zim = zoom(im1, (1, fixedWidth / N))
+    im = fix_image_size(zim, (fixedHeight, fixedWidth))
+    return im
 
 def fix_image_size(im, sz):
     blockHeight = sz[0]
     blockWidth = sz[1]    
     block = im[:blockHeight, :blockWidth]
-    container = np.zeros((blockHeight, blockWidth)).astype('uint8')
+    container = np.zeros((blockHeight, blockWidth))
     M, N = np.shape(block)        
     container[:M, :N] = block
     return container
@@ -70,6 +85,7 @@ if __name__ == '__main__':
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     print('Load in training images')
     train_images = np.array([read_image(fn) for fn in train_fns])
+    M, N = np.shape(train_images[0])
     
     print('Load in the test images')
     #test_fns = glob('Output\\Cribs\\Run_%03d\\*.png' % runNum)
@@ -77,7 +93,7 @@ if __name__ == '__main__':
     
     print('Construct the CNN')
     model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (500, 870, 1)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (M, N, 1)))
     model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
     model.add(layers.MaxPooling2D((2, 2)))

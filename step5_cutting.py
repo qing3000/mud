@@ -47,7 +47,7 @@ def enhance_image_quality(im0):
 #====================================
 if __name__ == '__main__':  
 
-    fns = glob.glob('Data\\RioTinto\\mudspot_cribs\\Run_122-20211004@162148\\*.png')
+    fns = glob.glob('Output\\Cribs\\RioTinto\\mudspot_cribs\\Run_122-20211004@162148\\*.png')
     
     foutPath = 'Output\\Blocks\\RioTinto\\Muddy\\'
     if not os.path.exists(foutPath):
@@ -60,8 +60,14 @@ if __name__ == '__main__':
     for k, fn in enumerate(fns):
         if k % 10 == 0:
             print('%d out of %d' % (k, len(fns)))
-        im = imread(fn)[trimSize : -trimSize,trimSize : -trimSize]
-        im = enhance_image_quality(im)
+
+        im0 = imread(fn) 
+        M, N = np.shape(im0)
+        if M > 2 * trimSize and N > 2 * trimSize:
+            im = im0[trimSize : -trimSize,trimSize : -trimSize]
+        else:
+            im = im0.copy()
+        im = enhance_image_quality(im)            
         M, N = np.shape(im)
         m = int(np.ceil(M / blockHeight))
         n = int(np.ceil(N / blockWidth))

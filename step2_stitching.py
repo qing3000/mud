@@ -7,6 +7,7 @@ Created on Fri Mar 25 12:52:02 2022
 
 import numpy as np
 import scipy.ndimage as ni
+import matplotlib.pyplot as plt
 from imageio import imread, imwrite
 import os
 from glob import glob
@@ -37,9 +38,12 @@ def enhance_image_quality(im0, railCentre, railWidth):
 
 
 overlappingSize = 386
-runNum = 364
+runNum = 354
+dataPath = 'C:\\Personal\\Mudspots\\Run_132-20190424@105356_38000-48000\\'
+dataPath = 'C:\\Personal\\Mudspots\\Run_354-20200216@032951_08000-13966\\'
 dataPath = 'C:\\Personal\\Mudspots\\Run_364-20200424@011547_85000-95000\\'
-
+#dataPath = 'C:\\Personal\\Mudspots\\Run_367-20200424@051342_06000-16000\\'
+dataPath = 'C:\\Personal\\Mudspots\\Run_381-20200505@015405_52000-62000\\'
 foutPath = 'Output\\Stitched\\Run_%03d\\' % runNum
 if not os.path.exists(foutPath):
     os.mkdir(foutPath)
@@ -49,7 +53,7 @@ fpaths = glob(dataPath + 'Run*')
 fns = []
 for fpath in fpaths:
     fns += glob(fpath + '\\*.jpg')
-
+fns = fns[4:]
 '''Load in the precalculated rail centre lines'''
 railCentres = np.loadtxt('RailCentreLines.csv', delimiter = ',')
 
@@ -75,15 +79,20 @@ for i in range(0, int(len(fns) / 4)):
     im3[:, railCentre3 - 1] = 255
 
     '''Combine 4 cameras'''
-    im = np.concatenate((im1[:, :railCentre1], \
-                          im2[:, railCentre2:-int(overlappingSize / 2)], \
-                          im3[:, int(overlappingSize / 2):railCentre3], \
-                          im4[:,railCentre4:]), axis = 1)
+    # im = np.concatenate((im1[:, :railCentre1], \
+    #                       im2[:, railCentre2:-int(overlappingSize / 2)], \
+    #                       im3[:, int(overlappingSize / 2):railCentre3], \
+    #                       im4[:,railCentre4:]), axis = 1)
     # im = np.concatenate((im1[:, :railCentre1], \
     #                       im2[:, railCentre2:], \
     #                       im3[:, :railCentre3], \
     #                       im4[:,railCentre4:]), axis = 1)
-        
+
+    im = np.concatenate((im2, im3), axis = 1)      
+    plt.subplot(2,2,4)
+    plt.imshow(im, interpolation = 'none', cmap = 'gray', aspect = 'auto')
+    plt.title('Run381 (Vline)')
+    raise SystemExit
     '''Save the stitched image'''
     fn = fns[j]
     imageNum = int(fn[fn.rfind('\\') + 1:fn.rfind('_')])

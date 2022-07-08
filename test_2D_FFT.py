@@ -43,13 +43,13 @@ def calculate_fft2(im):
 #====================================
 if __name__ == '__main__':  
     
-    fns = glob.glob('C:\\Personal\\Python\\Zetica\\mud\\Output\\Blocks\RioTinto\\All\*.png')
+    fns = glob.glob('Output\\CleanCribs\\Run_364\\*.png')
     
     cuts = [16, 32, 64]
     clrmap = cm.jet
     clrmap.set_under('white')
     for fn in fns[:50]:
-        im = imread(fn)
+        im = imread(fn)[:, :500]
         fim_mag, im = calculate_fft2(im)
         vmax1, block1 = calculate_ring_max(fim_mag, [0, cuts[0]])
         vmax2, block2 = calculate_ring_max(fim_mag, [cuts[0], cuts[1]])
@@ -58,14 +58,20 @@ if __name__ == '__main__':
     
         plt.subplot(1,2,1)
         plt.imshow(im, interpolation = 'none', cmap = 'gray')
+        plt.title('Crib image (left half)')
         plt.subplot(2,4,3)
-        plt.imshow(block1, interpolation = 'none', cmap = clrmap, vmin = 1e-9, vmax = vmax1)
+        plt.imshow(block1, interpolation = 'none', cmap = clrmap, vmin = 1e-9, vmax = 500000)
+        #plt.colorbar()
+        plt.title('2D FFT block 1')
         plt.subplot(2,4,4)
         plt.imshow(block2, interpolation = 'none', cmap = clrmap, vmin = 1e-9,  vmax = vmax2)
+        plt.title('2D FFT ring 1')
         plt.subplot(2,4,7)
         plt.imshow(block3, interpolation = 'none', cmap = clrmap, vmin = 1e-9,  vmax = vmax3)
+        plt.title('2D FFT ring 2')        
         plt.subplot(2,4,8)
         plt.imshow(block4, interpolation = 'none', cmap = clrmap, vmin = 1e-9,  vmax = vmax4)
+        plt.title('2D FFT ring 3')       
         shortfn = fn[fn.rfind('\\' ) + 1:-4]
-        plt.savefig('Diagnostics\\TrueClean\\%s.jpg' % shortfn, dpi = 600)
+        plt.savefig('Diagnostics\\TrueClean\\%s.jpg' % shortfn, dpi = 600, bbox_inches = 'tight')
         plt.close()
