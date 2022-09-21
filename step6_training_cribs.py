@@ -6,7 +6,8 @@ Created on Tue Apr 26 11:40:46 2022
 """
 import numpy as np
 from tensorflow.keras import models, layers, losses
-from tensorflow.keras.utils import plot_model
+from tensorflow.keras.utils import plot_model, to_categorical
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
 from glob import glob
 from imageio import imread
@@ -45,7 +46,7 @@ def read_image(fn):
     '''read in the image'''
     im0 = imread(fn)
     
-    '''Statistical normalisation to zero mean  and unit variance'''
+    '''Statistical normalisation to zero mean and unit variance'''
     im1 = im0 - np.mean(im0)
     sigma = np.std(im1)
     if sigma == 0:
@@ -74,17 +75,23 @@ def fix_image_size(im, sz):
     container[:M, :N] = block
     return container
   
-#====================================
-if __name__ == '__main__':  
+def main():
     runNum = 132
     print('Get the filenames')
-    cleanFns = glob('ForCNN\\CleanCribs\\*\\*.png', recursive = True)
-    shuffle(cleanFns)
-    cleanFns = cleanFns[:5000]
-    muddyFns = glob('ForCNN\\MuddyCribs\\*\\*.png', recursive = True)
+    cleanFns = glob('..\\AMTrakCribs\\Clean\\*.png', recursive = True)[:-500]
+    # shuffle(cleanFns)
+    # cleanFns = cleanFns[:5000]
+    muddyFns = glob('..\\AMTrakCribs\\Mud\\*.png', recursive = True)[:-500]
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     print('Load in training images')
-    train_images = np.array([read_image(fn) for fn in train_fns])
+    train_images = [read_image(train_fn) for train_fn in train_fns]
+    # mp.freeze_support()
+    # pool = mp.Pool(mp.cpu_count())
+    # train_images = []
+    # for train_image in tqdm.tqdm(pool.imap(read_image, train_fns), total = len(train_fns)):
+        # train_images.append(train_image)
+    # pool.close()
+
     M, N = np.shape(train_images[0])
     
     print('Load in the test images')
@@ -117,19 +124,34 @@ if __name__ == '__main__':
     #model.summary()
     plot_model(model, 'cnn_model.png', show_shapes = True)
     
+    # print('Prepare the batch generator')
+    # train_data_generator = ImageDataGenerator()
+    # batchSize = 10
+    # print(len(train_images))
+    # print(len(train_labels))
+    # train_ll = to_categorical(train_labels, 2)
+    # train_generator = train_data_generator.flow(train_images, train_ll, batch_size = batchSize)
+    
     print('Train the CNN')
+    history = model.fit(np.array(train_images), train_labels, validation_split = 0.3, epochs = 10)
     #history = model.fit(train_images, train_labels, epochs = 30, validation_data = (test_images, test_labels))
-    history = model.fit(train_images, train_labels, epochs = 10)
+    # history = model.fit_generator(train_generator, steps_per_epoch = len(train_images) // batchSize, epochs = 10)
     
     print('Save the model')
-    model.save('CNN_Model_Cribs')
+    model.save('CNN_Model_Tiles')
     
     '''Plot the accuracy curve'''
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
-    plt.grid(True)
+    # plt.plot(history.history['accuracy'], label='accuracy')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Accuracy')
+    # plt.ylim([0.5, 1])
+    # plt.legend(loc='lower right')
+    # plt.grid(True)
+    # plt.show()
     
+    np.save('TrainingHistory_cribs.npy', history.history)
     #ret = model.predict(train_images)
+
+#====================================
+if __name__ == '__main__':  
+    main()

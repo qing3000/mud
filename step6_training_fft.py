@@ -11,7 +11,10 @@ import matplotlib.pyplot as plt
 from glob import glob
 from imageio import imread
 from random import shuffle
-from test_2D_FFT import calculate_fft2
+from numpy.fft import fft2, fftshift
+import pdb
+import multiprocessing as mp
+import tqdm
 
 '''Read in the images from two list of files and create the label array'''
 def shuffle_filenames_and_labels(fns0, fns1):
@@ -40,45 +43,61 @@ def shuffle_filenames_and_labels(fns0, fns1):
     indices = indices[indices >= 0].astype('int')
     return all_fns[indices], all_labels[indices]
 
-def read_image(fn, cut = 16):
+def read_image(fn, cut = 128):
+    '''Read in the image'''
     img = imread(fn)
-    fimg, im = calculate_fft2(img)
-    M, N = np.shape(fimg)
-    cc = [int(M / 2), int(N / 2)]
-    block = fimg[cc[0] - cut: cc[0] + cut, cc[1] - cut : cc[1] + cut]
-    sigma = np.sqrt(np.mean(block**2))
+    
+    '''Normalisation'''
+    im = (img - np.mean(img))
+    sigma = np.std(im)
     if sigma == 0:
         sigma = 1
-    block /= sigma
+    im /= sigma
+    
+    '''2D FFT'''
+    NFFT = 1024
+    fim = np.abs(fftshift(fft2(im, (NFFT, NFFT))))
+    
+    '''Extract the ROI'''
+    cc = int(NFFT / 2)
+    block = fim[cc - cut: cc + cut, cc - cut : cc + cut]    
+    # plt.subplot(2, 1, 1)
+    # plt.imshow(img, interpolation = 'none', cmap = 'gray')
+    # plt.subplot(2,2,3)
+    # plt.imshow(fim, interpolation = 'none', )
+    # plt.subplot(2,2,4)
+    # plt.imshow(block, interpolation = 'none', )
+    # raise SystemExit
     return block
   
-#====================================
-if __name__ == '__main__':  
+def main():
     runNum = 132
     print('Get the filenames')
-    cleanFns = glob('ForCNN\\CleanBlocks\\*\\*.png', recursive = True)
+    cleanFns = glob('..\\AMTrakCribs\\Clean\\*.png', recursive = True)[:-500]
     shuffle(cleanFns)
-    cleanFns = cleanFns[:5000]
-    muddyFns = glob('ForCNN\\MuddyBlocks\\*.png', recursive = True)
+    cleanFns = cleanFns
+    muddyFns = glob('..\\AMTrakCribs\\Mud\\\\*.png', recursive = True)[:-500]
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
-    print('Load in training images')
-    train_images = np.array([read_image(fn) for fn in train_fns])
-    
-    print('Load in the test images')
-    test_fns = glob('Output\\Blocks\\Run_%03d\\*.png' % runNum)
-    test_images = np.array([read_image(fn) for fn in test_fns[10000:16000]])
+    print('Load in training images')    
+    train_images = [read_image(train_fn) for train_fn in train_fns]
+    # mp.freeze_support()
+    # pool = mp.Pool(mp.cpu_count())
+    # train_images = []
+    # for train_image in tqdm.tqdm(pool.imap(read_image, train_fns), total = len(train_fns)):
+        # train_images.append(train_image)
+    # pool.close()
     
     print('Construct the CNN')
     model = models.Sequential()
-    # model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 1)))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Flatten(input_shape = (32, 32, 1)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (256, 256, 1)))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Flatten(input_shape = (64, 64, 1)))
     model.add(layers.Dense(512, activation = 'relu'))
     model.add(layers.Dense(512, activation = 'relu'))    
     model.add(layers.Dense(64, activation = 'relu'))
@@ -92,21 +111,26 @@ if __name__ == '__main__':
     
     print('Plot the model as an image')
     #model.summary()
-    plot_model(model, 'cnn_model.png', show_shapes = True)
+    plot_model(model, 'cnn_model_fft.png', show_shapes = True)
     
     print('Train the CNN')
     #history = model.fit(train_images, train_labels, epochs = 30, validation_data = (test_images, test_labels))
-    history = model.fit(train_images, train_labels, epochs = 200)
+    history = model.fit(np.array(train_images), train_labels, validation_split = 0.3, epochs = 50)
     
     print('Save the model')
-    model.save('CNN_Model')
+    model.save('CNN_Model_FFT')
     
     '''Plot the accuracy curve'''
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
-    plt.grid(True)
+    # plt.plot(history.history['accuracy'], label='accuracy')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Accuracy')
+    # plt.ylim([0.5, 1])
+    # plt.legend(loc='lower right')
+    # plt.grid(True)
     
+    np.save('TrainingHistory_fft.npy', history.history)
     #ret = model.predict(train_images)
+
+#====================================
+if __name__ == '__main__':  
+    main()

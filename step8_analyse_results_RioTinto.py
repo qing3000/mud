@@ -38,8 +38,18 @@ def CopyImagesByRange(runNum, rngs, vs, imageNums, cribNums, rows, cols):
 
 '''Load in the ranking done by human'''
 '''Load in the labelling by the CNN and recalculate the labels based on a new threshold'''
-cleanValues = np.loadtxt('output\\Clean_values.csv')
-muddyValues = np.loadtxt('output\\Mud_values.csv')
+cleanValues = np.loadtxt('output\\Clean_Cribs_values.csv')
+muddyValues = np.loadtxt('output\\Mud_Cribs_values.csv')
+
+binSize = 0.5
+hx_clean, hy_clean = fixedHist(cleanValues, binSize)
+hx_muddy, hy_muddy = fixedHist(muddyValues, binSize)
+plt.plot(hx_clean, hy_clean, label = 'Clean training data (%d samples)' % len(cleanValues))
+plt.plot(hx_muddy, hy_muddy, label = 'Muddy training data (%d samples)' % len(muddyValues))
+plt.grid(True)
+plt.legend(loc = 0)
+plt.title('Training Data Distributions (Tiles)')        
+raise SystemExit
 
 imageNum1s, cribNum1s, row1s, col1s, v1s, temp, labels = np.loadtxt('Output\\Run132_result.csv', delimiter = ',', skiprows = 1, unpack = True)
 imageNum2s, cribNum2s, row2s, col2s, v2s, temp, labels = np.loadtxt('Output\\Run354_result.csv', delimiter = ',', skiprows = 1, unpack = True)
@@ -90,9 +100,7 @@ for r in range(-30, 10, 5):
     #CopyImagesByRange(354, (r, r + 5), v2s, imageNum2s, cribNum2s, row2s, col2s)
     #CopyImagesByRange(364, (r, r + 5), v3s, imageNum3s, cribNum3s, row3s, col3s)
     
-binSize = 0.2
-hx_clean, hy_clean = fixedHist(cleanValues, binSize)
-hx_muddy, hy_muddy = fixedHist(muddyValues, binSize)
+
 
 hx1, hy1 = fixedHist(v1s, binSize)
 hx2, hy2 = fixedHist(v2s, binSize)

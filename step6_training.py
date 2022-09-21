@@ -52,10 +52,10 @@ def read_image(fn):
 if __name__ == '__main__':  
     runNum = 132
     print('Get the filenames')
-    cleanFns = glob('ForCNN\\CleanBlocks\\*\\*.png', recursive = True)
-    shuffle(cleanFns)
-    cleanFns = cleanFns[:5000]
-    muddyFns = glob('ForCNN\\MuddyBlocks\\*.png', recursive = True)
+    cleanFns = glob('..\\AMTrakCribs\\Clean\\*.png', recursive = True)
+    # shuffle(cleanFns)
+    # cleanFns = cleanFns[:5000]
+    muddyFns = glob('..\\AMTrakCribs\\Mud\\*.png', recursive = True)
     train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
     print('Load in training images')
     train_images = np.array([read_image(fn) for fn in train_fns])

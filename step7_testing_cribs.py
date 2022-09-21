@@ -40,103 +40,45 @@ if __name__ == '__main__':
     rootPath = '.\\'
     
     print('Load in the traning file names')
-    cleanFns = glob('ForCNN\\CleanCribs\\*\\*.png', recursive = True)
-    shuffle(cleanFns)
-    muddyFns = glob('ForCNN\\MuddyCribs\\*\\*.png', recursive = True)
-    train_fns, train_labels = shuffle_filenames_and_labels(cleanFns, muddyFns)
-    print('Load in the test file names')
-    test_fns = glob(rootPath + 'Output\\Cribs\\Run_%d_batch3\\*.png' % runNum)
-    #test_fns = glob(rootPath + 'Output\\Cribs\\RioTinto\\mudspot_cribs\\Run_122-20211004@162148\\*.png')
-    
+    cleanFns = glob('..\\AMTrakCribs\\Clean\\*.png', recursive = True)
+    muddyFns = glob('..\\AMTrakCribs\\Mud\\*.png', recursive = True)
+
     print('Load in the pretrained CNN model')
     model = models.load_model('CNN_Model_Cribs')
     get_output_func = K.function([model.layers[0].input], model.layers[-2].output)
     
     print('Calculate the output')
     '''Due to memory limitation, we have to call the output function by a block size each time and combine at the end'''
-    train_output = cnn_get_output(train_fns, get_output_func)
-    test_output = cnn_get_output(test_fns, get_output_func)
-    
-    '''Calculate the output values of the second last layer'''
-    clean_c1_values = train_output[train_labels == 0, 0]
-    muddy_c1_values = train_output[train_labels == 1, 0]
-    clean_c2_values = train_output[train_labels == 0, 1]
-    muddy_c2_values = train_output[train_labels == 1, 1]
-    test_c1_values = test_output[:, 0]
-    test_c2_values = test_output[:, 1]
-    
-   
-    '''Calculate the histogram distributions'''
-    print('Calculate the histograms')
-    binSize = 0.2
-    hx_c1_clean, hy_c1_clean = fixedHist(clean_c1_values, binSize)
-    hx_c1_muddy, hy_c1_muddy = fixedHist(muddy_c1_values, binSize)
-    hx_c2_clean, hy_c2_clean = fixedHist(clean_c2_values, binSize)
-    hx_c2_muddy, hy_c2_muddy = fixedHist(muddy_c2_values, binSize)
-    hx_c1_test, hy_c1_test = fixedHist(test_c1_values, binSize)
-    hx_c2_test, hy_c2_test = fixedHist(test_c2_values, binSize)
-    
-    '''Plot the histogram distributions'''
-    plt.subplot(2,1,1)
-    plt.plot(hx_c1_clean, hy_c1_clean, label = 'Classifier 1 output (training clean)')
-    plt.plot(hx_c1_muddy, hy_c1_muddy, label = 'Classifier 1 output (training muddy)')
-    plt.plot(hx_c1_test, hy_c1_test, label = 'Classifier 1 output (test)')
-    plt.legend(loc = 0)
-    plt.grid(True)
-    plt.title('Run%d test results' % runNum)
-    plt.subplot(2,1,2)
-    plt.plot(hx_c2_clean, hy_c2_clean, label = 'Classifier 2 output (training clean)')
-    plt.plot(hx_c2_muddy, hy_c2_muddy, label = 'Classifier 2 output (training muddy)')
-    plt.plot(hx_c2_test, hy_c2_test, label = 'Classifier 2 output (test)')
-    plt.grid(True)
-    plt.legend(loc = 0)
-    
-    '''Classification'''
-    threshold = -1.0
-    labels = test_c1_values < threshold
-    
-    '''Output tile classification results to csv'''
-    # f = open('Output\\Run%d_Cribs_result.csv' % runNum, 'w')
-    # f.write('Image#,Crib#,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
-    # for i in range(len(test_fns)):
-    #     fn = test_fns[i]
-    #     shortfn = fn[fn.rfind('\\') + 1:fn.rfind('.')]
-    #     ss = shortfn.split('_')
-    #     imageNum = int(ss[1][5:])
-    #     cribNum = int(ss[2][4:])
-    #     rowNum = int(ss[3][3:])
-    #     colNum = int(ss[4][3:])
-    #     f.write('%d,%d,%d,%d,%f,%f,%d\n' % (imageNum, cribNum, rowNum, colNum, test_c1_values[i], test_c2_values[i], labels[i]))
-    # f.close()
-    
-
-    '''Output crib classification results to csv'''
-    f = open('Output\\Run%d_batch3_Cribs_result.csv' % runNum, 'w')
-    f.write('Image#,Crib#,Class 1 Value,Class 2 Value,Classification\n')
-    for i in range(len(test_fns)):
-        fn = test_fns[i]
-        shortfn = fn[fn.rfind('\\') + 1:fn.rfind('.')]
-        ss = shortfn.split('_')
-        imageNum = int(ss[1][5:])
-        cribNum = int(ss[2][4:])
-        f.write('%d,%d,%f,%f,%d\n' % (imageNum, cribNum, test_c1_values[i], test_c2_values[i], labels[i]))
-    f.close()    
-    
-    '''Output RioTinto classification results to csv'''
-    # f = open('Output\\RioTinto_Muddy_result.csv', 'w')
-    # f.write('Image filename,Row,Column,Class 1 Value,Class 2 Value,Classification\n')
-    # for i in range(len(test_fns)):
-    #     fn = test_fns[i]
-    #     shortfn = fn[fn.rfind('\\') + 1:fn.rfind('.')]
-    #     ss = shortfn.split('_')
-    #     f.write('%s,%f,%f,%d\n' % (shortfn, test_c1_values[i], test_c2_values[i], labels[i]))
-    # f.close()
+    clean_values = cnn_get_output(cleanFns, get_output_func)[:, 0]
+    muddy_values = cnn_get_output(muddyFns, get_output_func)[:, 0]
     
     '''Save the training output values for reference'''
     f = open('Output\\Clean_Cribs_values.csv', 'w')
-    f.write('\n'.join(map(str, clean_c1_values)))
+    f.write('\n'.join(map(str, clean_values)))
     f.close()
     f = open('Output\\Mud_Cribs_values.csv', 'w')
-    f.write('\n'.join(map(str, muddy_c1_values)))
+    f.write('\n'.join(map(str, muddy_values)))
     f.close()
 
+    clean_values = np.loadtxt('Output\\Clean_Cribs_values.csv')
+    muddy_values = np.loadtxt('Output\\Muddy_Cribs_values.csv')
+    x = clean_values[:-500]
+    y = muddy_values[:-500]
+    lda = (np.mean(x) - np.mean(y))**2 / (np.var(x) + np.var(y))
+    
+    '''Calculate the histogram distributions'''
+    print('Calculate the histograms')
+    binSize = 1
+    hx_clean, hy_clean = fixedHist(clean_values[:-500], binSize)
+    hx_muddy, hy_muddy = fixedHist(muddy_values[:-500], binSize)
+    hx_test_clean, hy_test_clean = fixedHist(clean_values[:500], binSize)
+    hx_test_muddy, hy_test_muddy = fixedHist(muddy_values[:500], binSize)
+    
+    '''Plot the histogram distributions'''
+    plt.plot(hx_clean, hy_clean, label = 'Training (clean)')
+    plt.plot(hx_muddy, hy_muddy, label = 'Training (muddy)')
+    plt.plot(hx_test_clean, hy_test_clean, label = 'Testing (clean)')
+    plt.plot(hx_test_muddy, hy_test_muddy, label = 'Testing (muddy)')
+    plt.legend(loc = 0)
+    plt.grid(True)
+    plt.title('Network output distributions LDA =%g (crib images)' % lda)

@@ -47,9 +47,9 @@ def enhance_image_quality(im0):
 #====================================
 if __name__ == '__main__':  
 
-    fns = glob.glob('Output\\Cribs\\RioTinto\\mudspot_cribs\\Run_122-20211004@162148\\*.png')
+    fns = glob.glob('..\\AMTrakCribs\\Mud\\*.png')
     
-    foutPath = 'Output\\Blocks\\RioTinto\\Muddy\\'
+    foutPath = '..\\AMTrakTiles\\Mud\\'
     if not os.path.exists(foutPath):
         os.mkdir(foutPath)
     trimSize = 50
